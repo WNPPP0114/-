@@ -1,0 +1,193 @@
+========================================================================
+乐鑫 (Espressif) AI System Software Intern 模拟面试指南 (Gap Year 强化版)
+候选人：吴志鹏
+日期：2026.02.25
+策略：展现“准研究生”的成熟度 + “持续精进”的工程野心 + “即插即用”的实战能力
+========================================================================
+
+【Part 1: 自我介绍 (关键调整)】
+*核心逻辑：明确“本科已毕业”身份，消除“Gap Year”顾虑，将其转化为“全职投入、高强度技能提升”的优势。*
+
+Q: 请做一个简短的自我介绍 (Self-Introduction).
+
+A (English Version - 建议准备，乐鑫有很多外籍工程师):
+"Hello. My name is Zhipeng Wu.
+I received my Bachelor's degree in Electronic Information Engineering from Shanghai University in 2025, and I have been admitted to HKUST for my MSc in Telecommunications starting in Fall 2026.
+Currently, I am taking a Gap Year to work full-time as an Embedded AI Engineer at Shanghai Chenhui Intelligent Technology.
+
+My ultimate goal is to build **a complete system from the bottom up**.
+During my undergraduate studies, I built a solid foundation in **Circuit Design, Signal Processing, and FPGA**, and focused on MCU control through Electronics Design Contests.
+However, I realized that hardware needs intelligence to be truly powerful, so I constantly expanded my skill set into Computer Vision and Deep Learning.
+In this Gap Year, I am connecting the dots:
+**By day**, I deploy VLM models on industrial robots and optimize FreeRTOS firmware to support complex AI tasks.
+**By night**, I develop an open-source project on RK3588, hand-writing a Linux heterogeneous computing pipeline.
+I am striving to evolve from a hardware engineer into a full-stack **AI System Engineer**.
+
+I am applying for this internship because..."
+
+A (中文参考):
+面试官好，我叫吴志鹏。我本科毕业于上海大学电子信息工程专业（2025届），目前已获得香港科技大学电信学 (Telecommunications) 硕士录取（2026 Fall）。
+在这一年的间隔期（Gap Year），我选择全职投身于嵌入式AI的一线开发，目前在上海晨晖智能科技担任嵌入式AI工程师。
+
+我的驱动力来源于一个愿景：**实现一个从底层硬件到上层算法的完整系统**。
+本科期间，我系统学习了**电路设计、信号处理和 FPGA**，并通过电子设计竞赛积累了扎实的 STM32 和 PCB 实战经验。
+但我意识到，只有硬件是不够的，所以我不断扩展技能边界，钻研计算机视觉与 AI 部署。
+这一年里，我正在努力把这些拼图拼起来：
+**白天**，我在晨晖智能做工业落地，负责把大模型部署到机器人上，同时重构底层的 FreeRTOS 固件来支撑 AI 业务。
+**晚上**，我利用业余时间做开源，手写了 RK3588 的 Linux 异构计算流水线，去理解 NPU 和操作系统的交互。
+我希望通过在乐鑫的实习，完成从“嵌入式工程师”到“AI系统工程师”的进阶，为未来的研究生科研打下坚实基础。
+
+------------------------------------------------------------------------
+
+【Part 2: 核心项目深挖 - RK3588 异构视觉与系统构建】
+*面试官视角：基于你的 README，这个项目非常完整。但既然简历写了“达成 2K UI”，我会验证其真实度。*
+
+Q1: (现状验证) 你简历里提到“达成 2K UI 60FPS 流畅交互”，这个是已经完全实现的效果吗？
+A:
+(诚实回答) "目前**底层的数据流水线 (Backend Pipeline)** 已经完全跑通，包括 RGA 零拷贝、NPU 推理和 DRM 显示，后台日志实测吞吐量稳定在 60FPS。
+至于 **Qt UI 交互界面**，目前是一个**正在集成中的 Prototype (原型)**。我现在的 Demo 主要是在终端打印性能指标和通过 DRM 直接输出渲染后的视频流。
+简历上的描述是我这个架构设计的**最终验收指标**，目前底层核心指标已达成，全功能的 Qt 界面是我下一步的工作重点。"
+*(Tips: 遇到简历写得太满而实际未完成的情况，**务必承认现状**，但要强调**核心技术难点已攻克**，剩下的只是工程量问题。)*
+
+Q2: (架构设计) 为什么在“YOLO + LLM”联调中，你设计成“按空格键触发”而不是实时每一帧都送给 LLM？
+A:
+这是一个由于**算力不对等**而做的系统折中设计。
+*   **YOLO (Vision)**: 在 NPU 上能跑 60FPS+ (10ms延迟)。
+*   **LLM (Qwen3)**: 推理速度约 14 Tokens/s。处理一句话要 1-2 秒。
+如果每一帧都送 LLM，系统会瞬间卡死。
+所以系统设计为 **异步事件驱动**：
+1.  **视觉线程**: 60FPS 跑满，保证视频预览流畅。
+2.  **交互线程**: 用户按空格才截取一帧数据送入 LLM。这样既保证了实时性，又实现了按需智能交互。
+
+Q2: (Token Injection) 你提到了 `RKLLM_INPUT_TOKEN` 接口和 `generate_yolo_qwen_token_map.py` 脚本。请具体讲讲这个脚本是怎么生成映射表的？
+*考察点：对 Transformer Tokenizer 的理解。*
+A:
+这个脚本的工作流程是：
+1.  加载 Qwen3 的 Tokenizer (通常是 HuggingFace 的 `AutoTokenizer`)。
+2.  读取 YOLO 的 `coco_80_labels_list.txt`，获取所有类别的文本名称（如 "person", "bicycle"）。
+3.  遍历每个类别名，调用 `tokenizer.encode("person")`，得到对应的 Token ID (例如 `1532`)。
+4.  将这些 ID 生成一个 C++ 头文件（Map 或 Switch-Case 结构）。
+在 C++ 运行时，当 YOLO 检测到 `class_id=0` (person)，我就直接查表拿到 `1532`，然后通过 RKLLM 的底层接口 `rkllm_input_token` 直接灌入 Embedding 层，完全跳过了运行时的文本编解码开销。
+
+Q3: (底层细节) 我看你的运行脚本里有一句 `ulimit -HSn 102400`，为什么要设这么大的句柄数？
+*考察点：Linux 系统运维/排错经验。*
+A:
+这是在调试 RKLLM 时发现的一个坑。
+RKLLM 在加载大模型（尤其是 Qwen 这种 1.7B 参数的模型）时，底层 runtime 可能会使用 `mmap` 映射大量的文件分片，或者在加载过程中频繁打开临时资源。
+默认的 Linux `nofile` 限制通常是 1024。如果不改大，程序运行中途会报 "Too many open files" 错误并 Crash。
+这在嵌入式大模型部署中是常见问题，因为模型文件本身就很大，系统资源开销远超传统嵌入式应用。
+
+Q5: (系统设计) 在后续集成 Qt 界面时，你预计最大的挑战是什么？如果按键触发推理导致界面卡顿，你会怎么解决？
+*考察点：对多线程阻塞和资源竞争的预判能力。*
+A:
+(展示设计思维) "我预计最大的挑战是 **主线程阻塞 (UI Blocking)** 和 **资源抢占**。
+1.  **防止 UI 卡死**: Qt 的主线程必须保持流畅刷新（60FPS）。调用 LLM 推理（耗时 1-2秒）时，绝对不能在主线程直接调 `llm_run()`。
+    *   **方案**: 我会把 LLM 推理封装到一个独立的 **Worker Thread** 中，利用 Qt 的 **Signal-Slot (信号槽)** 机制。主线程发出 'Start' 信号后立即返回继续渲染，Worker 线程跑完推理后发回 'Result' 信号更新 UI 文本框。
+2.  **防止视频丢帧**: 即使分了线程，LLM 满载时会大量占用 DDR 带宽。如果带宽不够，摄像头采集（V4L2）写入内存会失败导致画面撕裂或丢帧。
+    *   **方案**: 我会利用 `pthread_setschedparam` 设置线程优先级，将 **视频采集与渲染线程** 设为高优先级（SCHED_FIFO），将 **LLM 推理线程** 设为低优先级，确保交互流畅度优先于推理速度。"
+
+------------------------------------------------------------------------
+
+【Part 3: 实习经历 (晨晖智能 - 工业落地)】
+*面试官视角：你现在是全职实习，不仅要写代码，还要懂业务痛点。*
+
+Q3: (FreeRTOS) 你的固件里任务优先级是怎么划分的？为什么要这样设计？
+A:
+我采用了**“临界安全优先”**的设计原则，将系统划分为三层优先级：
+1.  **最高优先级 (Critical)**: **激光雷达避障任务**。这是保命的逻辑，必须在 10ms 内响应。一旦检测到障碍物，无论系统在做什么（比如正在解析温湿度数据），都必须立即打断，强制刹车。
+2.  **中优先级 (Normal)**: **普通传感器采集与业务逻辑**。比如温湿度、电压电流监测。这些数据丢一两个包没关系，可以使用 DMA + 信号量异步采集。
+3.  **低优先级 (Background)**: **网络通信与日志**。Wi-Fi/4G 上传如果不通，最多重传，不能影响核心控制。
+
+这种设计保证了在极端情况下（如突发障碍物+网络拥堵），机器人依然能优先确保自身安全。
+
+Q3.5: (进阶) 如果普通传感器任务正在读取I2C总线（加了锁），此时激光雷达任务唤醒也要用I2C，会发生什么？怎么解决？
+*考察点：优先级反转 (Priority Inversion)。*
+A:
+这会发生**优先级反转**：高优先级的雷达任务被低优先级的普通任务阻塞，而中间优先级的任务又打断了普通任务，导致雷达任务长时间无法执行，可能导致撞机。
+**解决方法**: 我使用了 FreeRTOS 的 **互斥锁 (Mutex)**，而不是二值信号量。Mutex 具有 **优先级继承 (Priority Inheritance)** 机制。
+当雷达任务（高）试图获取被普通任务（低）占用的 Mutex 时，OS 会临时将普通任务的优先级提升到和雷达任务一样高，迫使它尽快执行完临界区代码释放锁，从而减少雷达任务的等待时间。
+
+Q4: (AI落地) 在宝钢厂区这种复杂环境下，你为什么选择用 VLM 替代 YOLO？而不是继续优化 YOLO？
+A:
+我们在项目初期确实尝试过优化 YOLO（数据增强、改网络结构），但在**“白色烟雾/蒸汽泄漏”**这个特定场景下遇到了瓶颈。
+工业现场有大量白色反光物体（金属管道、阳光反射），YOLO 这种基于纹理特征的检测器很难区分它们和烟雾，导致**误报率极高**。
+我决定**完全舍弃 YOLO**，直接引入具备语义理解能力的 **VLM (Qwen-VL)**。
+*   **做法**: 针对性地构建了工业场景微调数据集，并设计了一套 **LoRA 微调框架**。
+*   **结果**: 虽然 VLM 推理速度慢于 YOLO，但我们通过 ROI 区域裁剪和隔帧检测优化了性能。最终在识别准确率上实现了质的飞跃（达到 99%），彻底解决了传统 CV 算法搞不定的“语义级”误报问题。
+
+------------------------------------------------------------------------
+
+【Part 4: 基础知识大通关 (乐鑫高频题库)】
+*乐鑫笔试和面试非常看重基础，尤其是 C 语言和 OS 原理。以下是必刷题。*
+
+[C 语言与计算机体系结构]
+
+Q5: (必考) `volatile` 关键字的作用？什么场景必须用？
+A: `volatile` 告诉编译器该变量的值可能随时被外部（如硬件/中断）改变，**禁止编译器对该变量进行寄存器缓存优化**，每次必须从内存重读。
+*   **场景**: 1. 硬件寄存器映射；2. 中断服务程序修改的全局标志位；3. 多线程共享的无锁变量。
+
+Q6: (内存对齐) `struct { char a; int b; char c; }` 在 32 位系统下占多少字节？为什么要对齐？
+A: 占 **12 字节** (1+3pad + 4 + 1+3pad)。
+*   **原因**: CPU 访问对齐的内存地址（如 4 的倍数）速度最快。如果不对齐，CPU 可能需要多次总线周期才能读出一个 `int`，甚至在某些架构（如 ARMv7 部分指令）直接触发 HardFault。
+
+Q7: (位操作) 如何用 C 语言把变量 `REG` 的第 n 位**置 1**？如何**清 0**？
+A:
+*   置 1: `REG |= (1 << n);`
+*   清 0: `REG &= ~(1 << n);`
+*   翻转: `REG ^= (1 << n);`
+
+Q8: (指针) 什么是**野指针**？什么是**内存泄漏**？
+A:
+*   **野指针**: 指向不可用内存（已释放或未初始化）的指针。危害是随机崩溃或数据篡改。
+*   **内存泄漏**: `malloc` 分配的内存忘记 `free`，导致可用堆内存越来越少，最终系统 OOM (Out Of Memory) 死机。
+
+[操作系统 (FreeRTOS/Linux)]
+
+Q9: (中断) 中断服务程序 (ISR) 里有哪些**绝对禁止**的操作？
+A:
+1.  **不能睡眠/阻塞**: 不能调用 `vTaskDelay`、`mutex_lock` 等会导致挂起的 API。
+2.  **不能耗时**: 不能执行 `printf` (除非它是轮询版的)、浮点运算或长循环。
+3.  **不能分配内存**: 通常不建议调 `malloc` (非确定性时间)。
+
+Q10: (死锁) 产生**死锁 (Deadlock)** 的四个必要条件是什么？如何避免？
+A:
+1.  互斥条件 (资源独占)。
+2.  请求与保持 (拿着碗里的，盯着锅里的)。
+3.  不剥夺 (没人能强抢)。
+4.  循环等待 (A等B，B等A)。
+*   **避免**: 破坏循环等待。规定所有线程申请锁的顺序必须一致（例如永远先拿锁 A 再拿锁 B）。
+
+Q11: (Cache) 既然 CPU 有 Cache 很快，为什么 DMA 传输数据时通常要**Clean/Invalidate Cache**？
+A:
+*   **DMA 搬运数据不经过 Cache**，直接操作物理内存。
+*   **CPU -> DMA**: CPU 写完数据可能还在 Cache 里没写回内存。启动 DMA 前必须 **Clean (Flush)** Cache，把脏数据刷回内存。
+*   **DMA -> CPU**: DMA 把数据搬到内存了，但 CPU 可能读的还是 Cache 里的旧数据。DMA 完成后必须 **Invalidate** Cache，强迫 CPU 下次去内存重读。
+
+[AI 系统基础]
+
+Q12: (算力) 一个卷积层输入 $H \times W \times C_{in}$，卷积核 $K \times K$，输出通道 $C_{out}$，计算量 (FLOPs) 大概是多少？
+A: $FLOPs \approx 2 \times H \times W \times C_{in} \times C_{out} \times K \times K$
+(每个输出像素点需要做 $K \times K \times C_{in}$ 次乘加运算，乘加算 2 FLOPs)。
+
+Q13: (激活函数) 为什么神经网络需要 ReLU 这样的**非线性**激活函数？
+A: 如果没有非线性激活函数，无论叠加多少层神经网络，最终都等价于一个单层的线性变换 (矩阵乘法)。非线性函数引入了非线性因素，让网络能拟合任意复杂的函数。
+
+------------------------------------------------------------------------
+
+【Part 5: 乐鑫场景题 (AIoT)】
+
+Q7: 乐鑫的 ESP32-S3 支持 SIMD 指令（加速 AI），你知道它是怎么实现的吗？如果你要优化一个自定义算子，怎么利用它？
+A:
+ESP32-S3 基于 Xtensa LX7 架构，主要通过 **TIE (Tensilica Instruction Extension)** 机制扩展了向量指令。
+如果我要优化一个算子（比如 Softmax 或 卷积）：
+1.  **调用 ESP-DSP / ESP-NN 库**: 乐鑫官方已经写好了很多汇编优化的函数（如 `dsps_dotprod_f32`），优先复用。
+2.  **内联汇编 (Inline Assembly)**: 针对特殊逻辑，在 C 代码里直接写汇编指令，利用 128-bit 宽度的向量寄存器一次处理 4 个 float 或 8 个 int16。
+3.  **内存对齐**: SIMD 指令通常要求数据地址是 16 字节对齐的。我在定义 Buffer 时会使用 `__attribute__((aligned(16)))`，否则会导致异常或性能回退。
+
+------------------------------------------------------------------------
+
+【Gap Year 面试特别建议】
+1.  **态度自信**: 不要把 Gap Year 当作劣势。你是为了“学得更深”、“准备得更充分”才Gap的。你的项目深度证明了这一点。
+2.  **强调产出**: 在晨晖的实习是你目前的重头戏。多用数据说话（准确率99%、吞吐量80%、功耗降低60%）。
+3.  **极客精神**: 着重提到你利用业余时间（晚上/节假日）做开源项目。这在乐鑫这种工程师文化浓厚的公司非常加分，证明了你对技术有**内驱力 (Intrinsic Motivation)**，而不仅仅是为了完成KPI。
+4.  **职业规划**: 明确告诉面试官，Master 之后你会继续在 AI System 领域深耕，乐鑫是你非常向往的平台，这段实习是你职业生涯的重要拼图。
