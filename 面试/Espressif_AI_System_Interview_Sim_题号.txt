@@ -76,6 +76,7 @@
   Q13     ReLU 非线性激活函数
 
   [AI 与部署 - 简历专业技能]
+  Q13.5   微调/剪枝/量化/Zero-Copy/流水线并行（调优技术总览）
   Q14     模型转换链：PyTorch→ONNX→TensorRT/RKNN、算子适配
   Q15     量化：W8A8、INT8
   Q16     Zero-Copy、流水线并行
