@@ -21,7 +21,7 @@ However, I realized that hardware needs intelligence to be truly powerful, so I 
 **Right now I feel the need to shift from “adding more” to “integrating what I have”**—taking time to absorb and connect these skills into a coherent system, rather than chasing breadth alone.
 In this Gap Year, I am doing exactly that: connecting the dots.
 **By day**, I do both **traditional embedded work**—such as FreeRTOS, drivers, firmware—and **AI application work**, including visual models and the now popular **LLM/VLM**, deploying them on industrial robots and optimizing the stack to support these tasks.
-**By night**, I spend time **learning and exploring emerging technologies**. Right now **Rockchip**, for example RK3588, is the platform I use for hands-on practice—I am building a Linux heterogeneous computing pipeline to understand NPU and OS interaction. If I keep the same pace as the past half year, I plan to wrap up Rockchip around **April** and then start on the **ESP32 series**. At the same time I want to **get out and explore**, for example through internships like this one, so I stay flexible.
+**By night and on holidays**, I spend time **learning and exploring emerging technologies**. Right now **Rockchip**, for example RK3588, is the platform I use for hands-on practice—I am building a Linux heterogeneous computing pipeline to understand NPU and OS interaction. If I keep the same pace as the past half year, I plan to wrap up Rockchip around **April** and then start on the **ESP32 series**. At the same time I want to **get out and explore**, for example through internships like this one, so I stay flexible.
 I am striving to evolve from a hardware engineer into a full-stack **AI System Engineer**.
 
 So far my experience has been largely about **applying existing tools and platforms** to ship products. I am applying for this internship because I want to work in an environment where I can get my hands on **more low-level practice**—closer to the chip, the runtime, and the system software—so that I can build a **more solid foundation** for my future full-time career."
@@ -36,7 +36,7 @@ A (中文参考):
 **现阶段我更希望用一段时间，把技术栈的“扩展”转为“整合与吸收”**，把已经学过的东西真正打通、形成系统能力，而不是只追求广度。
 这一年里，我正在朝这个方向努力，把这些拼图拼起来：
 **白天**，我在这家初创公司既有**传统嵌入式**的工作，比如 FreeRTOS、驱动、固件，也有**AI 应用**方向的工作，包括视觉模型以及现在很流行的 **LLM/VLM**，把它们部署到工业机器人上，并重构底层固件来支撑这些业务。
-**晚上**，我主要在**了解和学习新兴技术**。目前 **Rockchip**，比如 RK3588，是我用来做实践的一个选择，在上面搭建 Linux 异构计算流水线、理解 NPU 与操作系统的交互。如果节奏和之前半年一样，我计划 Rockchip 学到**四月份**告一段落，之后开始 **ESP32**；不过现在我也想到外面的世界闯闯，比如像这次实习，所以会灵活应对。
+**晚上和节假日**，我主要在**了解和学习新兴技术**。目前 **Rockchip**，比如 RK3588，是我用来做实践的一个选择，在上面搭建 Linux 异构计算流水线、理解 NPU 与操作系统的交互。如果节奏和之前半年一样，我计划 Rockchip 学到**四月份**告一段落，之后开始 **ESP32**；不过现在我也想到外面的世界闯闯，比如像这次实习，所以会灵活应对。
 
 目前我的经历更多是**把现成的资源、平台拿来做应用、落地**。我希望能到像乐鑫这样的企业，**接触更底层的实践**，离芯片、运行时和系统软件更近，为之后正式参加工作打下更坚实的基础。
 
